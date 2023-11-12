@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+// Node structure for non-zero elements
+class Node {
+public:
+    int row, column, value;
+    Node *nextRow, *nextColumn;
+
+    Node(int r, int c, int v) : row(r), column(c), value(v), nextRow(nullptr), nextColumn(nullptr) {}
+};
+
+// SparseMatrix class to handle the linked list
+class SparseMatrix {
+private:
+    std::vector<Node*> rowHeads;
+    std::vector<Node*> colHeads;
+    int rows, cols;
+
+public:
+    SparseMatrix(int r, int c) : rows(r), cols(c), rowHeads(r, nullptr), colHeads(c, nullptr) {}
+
+    // Function to insert a new node
+    void insert(int r, int c, int value) {
+        if (value == 0 || r >= rows || c >= cols) {
+            return; // Do not store zero values or invalid positions
+        }
+
+        Node* newNode = new Node(r, c, value);
+
+        // Insert into the row
+        if (!rowHeads[r] || rowHeads[r]->column > c) {
+            newNode->nextColumn = rowHeads[r];
+            rowHeads[r] = newNode;
+        } else {
+            Node* temp = rowHeads[r];
+            while (temp->nextColumn && temp->nextColumn->column < c) {
+                temp = temp->nextColumn;
+            }
+            newNode->nextColumn = temp->nextColumn;
+            temp->nextColumn = newNode;
+        }
+
+        // Insert into the column
+        if (!colHeads[c] || colHeads[c]->row > r) {
+            newNode->nextRow = colHeads[c];
+            colHeads[c] = newNode;
+        } else {
+            Node* temp = colHeads[c];
+            while (temp->nextRow && temp->nextRow->row < r) {
+                temp = temp->nextRow;
+            }
+            newNode->nextRow = temp->nextRow;
+            temp->nextRow = newNode;
+        }
+    }
+
+    // Function to display the compact representation of the matrix
+    void displayCompact() {
+        std::cout << "Compact representation of the sparse matrix:" << std::endl;
+        for (int r = 0; r < rows; ++r) {
+            Node* rowCurrent = rowHeads[r];
+            while (rowCurrent != nullptr) {
+                std::cout << "(" << rowCurrent->row << ", " << rowCurrent->column << ", " << rowCurrent->value << ") ";
+                rowCurrent = rowCurrent->nextColumn;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    // Destructor to deallocate memory
+    ~SparseMatrix() {
+        for (Node* head : rowHeads) {
+            while (head) {
+                Node* next = head->nextColumn;
+                delete head;
+                head = next;
+            }
+        }
+    }
+};
+
+int main() {
+    // Create a new Sparse Matrix with dimensions 4x5
+    SparseMatrix sparseMatrix(4, 5);
+
+    // Insert some non-zero elements
+    sparseMatrix.insert(0, 2, 3);
+    sparseMatrix.insert(1, 4, 5);
+    sparseMatrix.insert(3, 1, 2);
+
+    // Display the compact representation of the matrix
+    sparseMatrix.displayCompact();
+
+    return 0;
+}
